@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Message Opt-Out</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            padding: 32px 24px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #444;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+        }
+
+        input::placeholder {
+            color: #aaa;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #d9534f;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+
+        button:hover {
+            background: #c9302c;
+        }
+
+        button:active {
+            background: #b52b27;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .message.success {
+            display: block;
+            background: #eaf7ec;
+            color: #276738;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            display: block;
+            background: #fdecea;
+            color: #8b2020;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-view {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .success-view .checkmark {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .success-view h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .success-view p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="form-view">
+            <h1>Manager Message Opt-Out</h1>
+            <p class="subtitle">Enter your information below to opt out of manager messages.</p>
+
+            <form id="opt-out-form" novalidate>
+                <div class="field">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Jane Smith" required autocomplete="name">
+                </div>
+
+                <div class="field">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567" required autocomplete="tel">
+                    <div class="field-hint">US mobile number used for manager messages</div>
+                </div>
+
+                <button type="submit" id="submit-btn">Opt Out</button>
+
+                <div id="message" class="message"></div>
+            </form>
+        </div>
+
+        <div id="success-view" class="success-view" style="display: none;">
+            <div class="checkmark">&#10003;</div>
+            <h2>You've been opted out</h2>
+            <p>Your phone number has been removed from the manager message list. No further action is needed.</p>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================
+        // CONFIGURE: Replace with your deployed Google Apps Script URL
+        // ======================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrtX9Gs6w2sNKjhu0rJE26NtMWu7h5GENumHGamC1Sko9I6N1kHbttA-WSEQUh9nhq/exec';
+
+        const form = document.getElementById('opt-out-form');
+        const phoneInput = document.getElementById('phone');
+        const nameInput = document.getElementById('name');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageEl = document.getElementById('message');
+        const formView = document.getElementById('form-view');
+        const successView = document.getElementById('success-view');
+
+        // Format phone number as user types
+        phoneInput.addEventListener('input', function () {
+            let digits = this.value.replace(/\D/g, '');
+            if (digits.length > 10) digits = digits.slice(0, 10);
+
+            let formatted = '';
+            if (digits.length > 0) formatted += '(' + digits.slice(0, 3);
+            if (digits.length >= 3) formatted += ') ';
+            if (digits.length > 3) formatted += digits.slice(3, 6);
+            if (digits.length >= 6) formatted += '-' + digits.slice(6);
+
+            this.value = formatted;
+        });
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+
+        function clearMessage() {
+            messageEl.className = 'message';
+            messageEl.textContent = '';
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>Submitting...';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Opt Out';
+            }
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            clearMessage();
+
+            const name = nameInput.value.trim();
+            const rawPhone = phoneInput.value.replace(/\D/g, '');
+
+            if (!name) {
+                showMessage('Please enter your name.', 'error');
+                nameInput.focus();
+                return;
+            }
+
+            if (rawPhone.length !== 10) {
+                showMessage('Please enter a valid 10-digit US phone number.', 'error');
+                phoneInput.focus();
+                return;
+            }
+
+            if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                showMessage('Form is not configured yet. See README for setup instructions.', 'error');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Use URL-encoded form data — application/json is blocked in no-cors mode
+                const formData = new URLSearchParams();
+                formData.append('name', name);
+                formData.append('phone', rawPhone);
+                formData.append('timestamp', new Date().toISOString());
+
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+
+                // no-cors returns opaque response, so we treat a completed fetch as success
+                formView.style.display = 'none';
+                successView.style.display = 'block';
+            } catch (err) {
+                showMessage('Something went wrong. Please try again.', 'error');
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
